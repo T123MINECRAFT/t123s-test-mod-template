@@ -49,7 +49,7 @@ jobs:
           github-prerelease: ${{ steps.prerelease_check.outputs.is_prerelease == 'true' }}
 
           modrinth-id: 5HrgYW5Z
-          modrinth-token: mrp_KSQ5BHqe06EyUJGTIdciCoAUYewkTvmITlTBUV5ppXEn1qK5P4xDnTCpXbdf
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
 
           name: ${{ github.ref_name }}
           version: ${{ github.ref_name }}
