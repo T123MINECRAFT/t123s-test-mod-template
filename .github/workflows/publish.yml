@@ -3,8 +3,7 @@ name: Publish Mod to GitHub Releases & Modrinth
 on:
   push:
     tags:
-      - '[0-9]+*'
-  #workflow_dispatch:       # 也允许手动触发（方便测试）
+      - '[0-9]+*'          # 匹配以数字开头的标签，如 0.1.0-alpha.1
 
 jobs:
   publish:
@@ -31,45 +30,34 @@ jobs:
       - name: List built files
         run: ls -R build/libs/
 
-      - name: Build full version string
-        id: full_version
+      # 动态生成版本号字符串
+      - name: Build version strings
+        id: version_strings
         run: |
-          TAG="${{ github.ref_name }}"          # 例如 0.1.0-alpha.1
-          FULL="t123s_test_mod-${TAG}-fabric+1.21.11"
-          echo "version=${FULL}" >> $GITHUB_OUTPUT
+          TAG="${{ github.ref_name }}"
+          MODRINTH_VERSION="${TAG}-fabric+1.21.1"
+          FILE_VERSION="t123s_test_mod-${MODRINTH_VERSION}"
+          echo "modrinth_version=${MODRINTH_VERSION}" >> $GITHUB_OUTPUT
+          echo "file_version=${FILE_VERSION}" >> $GITHUB_OUTPUT
 
-
-      - name: Publish to GitHub & Modrinth
+      # 发布到 GitHub 和 Modrinth
+      - name: Publish to Platforms
         uses: Kir-Antipov/mc-publish@v3.3
         with:
-          files: build/libs/*.jar
+          files: build/libs/${{ steps.version_strings.outputs.file_version }}.jar
 
           # GitHub 配置
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          # 自动判断是否为预发布版本（标签含 beta/alpha/rc/pre 则为 true）
-          github-prerelease:
-            ${{
-            contains(github.ref_name, 'alpha') ||
-            contains(github.ref_name, 'beta') ||
-            contains(github.ref_name, 'rc') ||
-            contains(github.ref_name, 'pre')
-            }}
+          github-prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') || contains(github.ref_name, 'pre') }}
 
-          # Modrinth 配置（将 token 存入 GitHub Secrets）
+          # Modrinth 配置
           modrinth-id: 5HrgYW5Z
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
 
           # 版本元数据
           name: ${{ github.ref_name }}
-          version: ${{ steps.full_version.outputs.version }}
-          version-type: |
-            ${{ 
-              contains(github.ref_name, 'alpha') && 'alpha' ||
-              contains(github.ref_name, 'beta') && 'beta' ||
-              contains(github.ref_name, 'rc') && 'rc' ||
-              contains(github.ref_name, 'pre') && 'pre' ||
-              'release'
-            }}
+          version: ${{ steps.version_strings.outputs.modrinth_version }}
+          version-type: ${{ contains(github.ref_name, 'alpha') && 'alpha' || contains(github.ref_name, 'beta') && 'beta' || contains(github.ref_name, 'rc') && 'rc' || contains(github.ref_name, 'pre') && 'pre' || 'release' }}
           loaders: fabric
-          game-versions: 1.21.11          # ✅ 修正版本号（你写的是 1.21.11，Minecraft 无此版本）
+          game-versions: 1.21.1
           java: Java 21
