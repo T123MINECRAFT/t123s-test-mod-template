@@ -3,8 +3,8 @@ name: Publish Mod to GitHub Releases & Modrinth
 on:
   push:
     tags:
-      - '[0-9]+*'               # 当你推送 v1.0.0, v2.1.0-beta 等标签时触发
-  workflow_dispatch:       # 也允许手动触发（方便测试）
+      - '[0-9]+*'
+  #workflow_dispatch:       # 也允许手动触发（方便测试）
 
 jobs:
   publish:
