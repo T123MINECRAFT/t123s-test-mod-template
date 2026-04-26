@@ -31,8 +31,8 @@ jobs:
       - name: Publish to GitHub & Modrinth
         uses: Kir-Antipov/mc-publish@v3.3
         with:
-          # 构建产物路径
-          files: build/libs/*.jar
+          files: |
+            build/libs/!(*-sources).jar
 
           # GitHub 配置
           github-token: ${{ secrets.GITHUB_TOKEN }}
