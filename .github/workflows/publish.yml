@@ -3,13 +3,13 @@ name: Publish Mod to GitHub Releases & Modrinth
 on:
   push:
     tags:
-      - '[0-9]+*'          # 匹配以数字开头的标签，如 0.1.0-alpha.1
+      - '[0-9]+*'
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: write      # 允许创建 GitHub Release
+      contents: write
 
     steps:
       - name: Checkout Repository
@@ -30,31 +30,23 @@ jobs:
       - name: List built files
         run: ls -R build/libs/
 
-      # 动态生成版本号字符串
       - name: Build version strings
         id: version_strings
         run: |
-          TAG="${{ github.ref_name }}"
-          MODRINTH_VERSION="${TAG}-fabric+1.21.1"
-          FILE_VERSION="t123s_test_mod-${MODRINTH_VERSION}"
+          TAG="${{ github.ref_name }}"                     # 0.1.0-alpha.1
+          MODRINTH_VERSION="${TAG}-fabric+1.21.1"          # 0.1.0-alpha.1-fabric+1.21.1
+          FILE_VERSION="t123s_test_mod-${MODRINTH_VERSION}" # t123s_test_mod-0.1.0-alpha.1-fabric+1.21.1
           echo "modrinth_version=${MODRINTH_VERSION}" >> $GITHUB_OUTPUT
           echo "file_version=${FILE_VERSION}" >> $GITHUB_OUTPUT
 
-      # 发布到 GitHub 和 Modrinth
       - name: Publish to Platforms
         uses: Kir-Antipov/mc-publish@v3.3
         with:
           files: build/libs/${{ steps.version_strings.outputs.file_version }}.jar
-
-          # GitHub 配置
           github-token: ${{ secrets.GITHUB_TOKEN }}
           github-prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') || contains(github.ref_name, 'pre') }}
-
-          # Modrinth 配置
           modrinth-id: 5HrgYW5Z
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
-
-          # 版本元数据
           name: ${{ github.ref_name }}
           version: ${{ steps.version_strings.outputs.modrinth_version }}
           version-type: ${{ contains(github.ref_name, 'alpha') && 'alpha' || contains(github.ref_name, 'beta') && 'beta' || contains(github.ref_name, 'rc') && 'rc' || contains(github.ref_name, 'pre') && 'pre' || 'release' }}
